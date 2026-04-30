@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Drawing.Imaging; // 이미지 저장을 위해 추가
 
 namespace SimplePaint
 {
@@ -119,6 +120,29 @@ namespace SimplePaint
         }
 
         private void btnOpenFile_Click(object sender, EventArgs e) { }
-        private void btnSaveFile_Click(object sender, EventArgs e) { }
+
+        // --- 이미지 저장 기능 구현 ---
+        private void btnSaveFile_Click(object sender, EventArgs e)
+        {
+            // SaveFileDialog를 사용하여 저장 경로 지정
+            using (SaveFileDialog sfd = new SaveFileDialog())
+            {
+                sfd.Title = "이미지 저장";
+                sfd.Filter = "PNG 파일(*.png)|*.png|JPG 파일(*.jpg)|*.jpg|BMP 파일(*.bmp)|*.bmp";
+
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    // 파일 확장자에 따라 적절한 포맷으로 저장
+                    string ext = System.IO.Path.GetExtension(sfd.FileName).ToLower();
+                    ImageFormat format = ImageFormat.Png;
+
+                    if (ext == ".jpg") format = ImageFormat.Jpeg;
+                    else if (ext == ".bmp") format = ImageFormat.Bmp;
+
+                    canvas.Save(sfd.FileName, format);
+                    MessageBox.Show("저장이 완료되었습니다.");
+                }
+            }
+        }
     }
 }
