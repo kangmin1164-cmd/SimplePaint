@@ -55,6 +55,9 @@
             picCanvas.Size = new Size(990, 410);
             picCanvas.TabIndex = 0;
             picCanvas.TabStop = false;
+            picCanvas.MouseDown += picCanvas_MouseDown;
+            picCanvas.MouseMove += picCanvas_MouseMove;
+            picCanvas.MouseUp += picCanvas_MouseUp;
             // 
             // lblAppName
             // 
