@@ -41,18 +41,20 @@
             trbLineWidth = new TrackBar();
             btnOpenFile = new Button();
             btnSaveFile = new Button();
+            panel1 = new Panel();
             ((System.ComponentModel.ISupportInitialize)picCanvas).BeginInit();
             groupBox1.SuspendLayout();
             groupBox2.SuspendLayout();
             groupBox3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)trbLineWidth).BeginInit();
+            panel1.SuspendLayout();
             SuspendLayout();
             // 
             // picCanvas
             // 
-            picCanvas.Location = new Point(26, 211);
+            picCanvas.Location = new Point(3, 3);
             picCanvas.Name = "picCanvas";
-            picCanvas.Size = new Size(990, 410);
+            picCanvas.Size = new Size(987, 404);
             picCanvas.TabIndex = 0;
             picCanvas.TabStop = false;
             picCanvas.MouseDown += picCanvas_MouseDown;
@@ -190,18 +192,27 @@
             btnSaveFile.UseVisualStyleBackColor = false;
             btnSaveFile.Click += btnSaveFile_Click;
             // 
+            // panel1
+            // 
+            panel1.AutoScroll = true;
+            panel1.Controls.Add(picCanvas);
+            panel1.Location = new Point(26, 211);
+            panel1.Name = "panel1";
+            panel1.Size = new Size(990, 410);
+            panel1.TabIndex = 7;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1028, 633);
+            Controls.Add(panel1);
             Controls.Add(btnSaveFile);
             Controls.Add(btnOpenFile);
             Controls.Add(groupBox3);
             Controls.Add(groupBox2);
             Controls.Add(groupBox1);
             Controls.Add(lblAppName);
-            Controls.Add(picCanvas);
             Name = "Form1";
             Text = "Simple Paint";
             ((System.ComponentModel.ISupportInitialize)picCanvas).EndInit();
@@ -210,6 +221,7 @@
             groupBox3.ResumeLayout(false);
             groupBox3.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)trbLineWidth).EndInit();
+            panel1.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -228,5 +240,6 @@
         private Button btnCircle;
         private ComboBox cmbColor;
         private TrackBar trbLineWidth;
+        private Panel panel1;
     }
 }
