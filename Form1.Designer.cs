@@ -36,11 +36,11 @@
             btnRectangle = new Button();
             btnLine = new Button();
             groupBox2 = new GroupBox();
+            cmbColor = new ComboBox();
             groupBox3 = new GroupBox();
+            trbLineWidth = new TrackBar();
             btnOpenFile = new Button();
             btnSaveFile = new Button();
-            cmbColor = new ComboBox();
-            trbLineWidth = new TrackBar();
             ((System.ComponentModel.ISupportInitialize)picCanvas).BeginInit();
             groupBox1.SuspendLayout();
             groupBox2.SuspendLayout();
@@ -92,6 +92,7 @@
             btnCircle.Text = "원";
             btnCircle.TextAlign = ContentAlignment.BottomCenter;
             btnCircle.UseVisualStyleBackColor = true;
+            btnCircle.Click += btnCircle_Click;
             // 
             // btnRectangle
             // 
@@ -105,6 +106,7 @@
             btnRectangle.Text = "사각형";
             btnRectangle.TextAlign = ContentAlignment.BottomCenter;
             btnRectangle.UseVisualStyleBackColor = true;
+            btnRectangle.Click += btnRectangle_Click;
             // 
             // btnLine
             // 
@@ -118,6 +120,7 @@
             btnLine.Text = "직선";
             btnLine.TextAlign = ContentAlignment.BottomCenter;
             btnLine.UseVisualStyleBackColor = true;
+            btnLine.Click += btnLine_Click;
             // 
             // groupBox2
             // 
@@ -130,6 +133,15 @@
             groupBox2.TabStop = false;
             groupBox2.Text = "색 선택";
             // 
+            // cmbColor
+            // 
+            cmbColor.FormattingEnabled = true;
+            cmbColor.Location = new Point(6, 59);
+            cmbColor.Name = "cmbColor";
+            cmbColor.Size = new Size(192, 37);
+            cmbColor.TabIndex = 7;
+            cmbColor.SelectedIndexChanged += cmbColor_SelectedIndexChanged;
+            // 
             // groupBox3
             // 
             groupBox3.Controls.Add(trbLineWidth);
@@ -140,6 +152,14 @@
             groupBox3.TabIndex = 4;
             groupBox3.TabStop = false;
             groupBox3.Text = "선 두깨";
+            // 
+            // trbLineWidth
+            // 
+            trbLineWidth.Location = new Point(6, 42);
+            trbLineWidth.Name = "trbLineWidth";
+            trbLineWidth.Size = new Size(251, 69);
+            trbLineWidth.TabIndex = 8;
+            trbLineWidth.ValueChanged += trbLineWidth_ValueChanged;
             // 
             // btnOpenFile
             // 
@@ -152,6 +172,7 @@
             btnOpenFile.TabIndex = 5;
             btnOpenFile.Text = "열기";
             btnOpenFile.UseVisualStyleBackColor = false;
+            btnOpenFile.Click += btnOpenFile_Click;
             // 
             // btnSaveFile
             // 
@@ -164,21 +185,7 @@
             btnSaveFile.TabIndex = 6;
             btnSaveFile.Text = "저장";
             btnSaveFile.UseVisualStyleBackColor = false;
-            // 
-            // cmbColor
-            // 
-            cmbColor.FormattingEnabled = true;
-            cmbColor.Location = new Point(6, 59);
-            cmbColor.Name = "cmbColor";
-            cmbColor.Size = new Size(192, 37);
-            cmbColor.TabIndex = 7;
-            // 
-            // trbLineWidth
-            // 
-            trbLineWidth.Location = new Point(6, 42);
-            trbLineWidth.Name = "trbLineWidth";
-            trbLineWidth.Size = new Size(251, 69);
-            trbLineWidth.TabIndex = 8;
+            btnSaveFile.Click += btnSaveFile_Click;
             // 
             // Form1
             // 
