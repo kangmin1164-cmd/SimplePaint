@@ -7,16 +7,16 @@ namespace SimplePaint
 {
     public partial class Form1 : Form
     {
-        // 그리기 상태 변수 (과제 1, 2 반영)
+        // 그리기 상태 변수
         private string currentShape = "Line";
         private Color currentColor = Color.Black;
         private int currentLineWidth = 1;
 
-        private Bitmap canvas;          // 최종 그림이 저장되는 원본 도화지 (실제 크기)
+        private Bitmap canvas;          // 실제 그림이 기록되는 원본 도화지
         private Point startPoint;       // 마우스 클릭 시작점
         private bool isDrawing = false; // 그리기 상태 체크
 
-        // [과제 4] 확대/축소 배율 변수
+        //  확대/축소 비율 변수 (float 사용)
         private float zoomScale = 1.0f;
 
         public Form1()
@@ -25,16 +25,26 @@ namespace SimplePaint
             InitControls();
             InitCanvas();
 
-            // picCanvas에 직접 휠 이벤트를 연결하여 인식률 극대화
-            picCanvas.MouseWheel += new MouseEventHandler(picCanvas_MouseWheel);
+            // 폼뿐만 아니라 PictureBox(도화지)에도 휠 이벤트를 연결
+            this.MouseWheel += new MouseEventHandler(Form1_MouseWheel);
+            picCanvas.MouseWheel += new MouseEventHandler(Form1_MouseWheel);
 
-            // 마우스가 영역에 들어오면 포커스를 주어 휠이 즉시 작동하게 함
-            picCanvas.MouseEnter += (s, e) => picCanvas.Focus();
+            // 마우스가 캔버스 위로 올라올 때 포커스를 가져와 휠 이벤트를 정상적으로 받도록 처리
+            picCanvas.MouseEnter += (sender, e) => {
+                if (picCanvas.Parent != null)
+                {
+                    picCanvas.Parent.Focus(); // 부모 컨트롤(Panel 또는 Form)에 포커스 부여
+                }
+                else
+                {
+                    this.Focus();
+                }
+            };
         }
 
         private void InitCanvas()
         {
-            // 캔버스 초기화 (흰색 배경)
+            // 초기 캔버스 생성
             canvas = new Bitmap(picCanvas.Width, picCanvas.Height);
             using (Graphics g = Graphics.FromImage(canvas))
             {
@@ -51,56 +61,60 @@ namespace SimplePaint
             trbLineWidth.Maximum = 10;
             trbLineWidth.Value = 1;
 
-            // 스크롤바 활성화를 위해 픽처박스 크기가 이미지에 맞춰지도록 설정
+            // 기본 SizeMode 설정
             picCanvas.SizeMode = PictureBoxSizeMode.AutoSize;
         }
 
-        // --- [과제 4] 마우스 휠 확대/축소 (Ctrl + 휠) ---
-        private void picCanvas_MouseWheel(object sender, MouseEventArgs e)
+        // --- 통합된 확대/축소 로직 ---
+
+        private void ApplyZoom(float scale)
         {
-            if (Control.ModifierKeys == Keys.Control)
+            zoomScale = scale;
+
+            if (canvas != null)
             {
-                // e.Delta가 양수면 확대, 음수면 축소
-                if (e.Delta > 0) zoomScale += 0.1f;
-                else if (e.Delta < 0 && zoomScale > 0.2f) zoomScale -= 0.1f;
+                // 1. 원본 이미지 크기에 배율을 곱하여 PictureBox 크기 설정
+                // 이 작업이 수행되면 부모 Panel의 AutoScroll에 의해 스크롤바 생김
+                picCanvas.Width = (int)(canvas.Width * zoomScale);
+                picCanvas.Height = (int)(canvas.Height * zoomScale);
 
-                UpdateCanvasDisplay(); // 배율에 맞춰 화면 갱신
+                // Zoom 대신 StretchImage를 사용하면 
+                // 소수점 오차로 인한 미세한 여백 발생을 막고 클릭 좌표를 더 정확하게 매핑
+                picCanvas.SizeMode = PictureBoxSizeMode.StretchImage;
 
-                // 폼의 기본 스크롤 동작 방지
-                ((HandledMouseEventArgs)e).Handled = true;
+                // 3. 화면 갱신
+                picCanvas.Invalidate();
             }
         }
 
-        // [핵심] 화면을 배율에 맞게 다시 그려주는 함수
-        private void UpdateCanvasDisplay()
+        private void Form1_MouseWheel(object sender, MouseEventArgs e)
         {
-            if (canvas == null) return;
-
-            // 1. 픽처박스 크기를 배율에 맞춰 변경 (부모 Panel에 스크롤바 생성됨)
-            picCanvas.Width = (int)(canvas.Width * zoomScale);
-            picCanvas.Height = (int)(canvas.Height * zoomScale);
-
-            // 2. 현재 배율이 적용된 화면용 비트맵 생성
-            Bitmap displayBitmap = new Bitmap(picCanvas.Width, picCanvas.Height);
-            using (Graphics g = Graphics.FromImage(displayBitmap))
+            // ModifierKeys 조건을 더 안전하게 체크
+            if ((Control.ModifierKeys & Keys.Control) == Keys.Control)
             {
-                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                // 원본 canvas를 배율이 적용된 크기로 그림
-                g.DrawImage(canvas, 0, 0, picCanvas.Width, picCanvas.Height);
-            }
+                if (e.Delta > 0)
+                {
+                    ApplyZoom(zoomScale + 0.1f); // 10% 확대
+                }
+                else
+                {
+                    if (zoomScale > 0.2f) // 최소 배율 제한 (0이 되지 않도록 방어)
+                    {
+                        ApplyZoom(zoomScale - 0.1f); // 10% 축소
+                    }
+                }
 
-            // 3. 화면에 표시 (기존 이미지를 Dispose하여 메모리 관리 가능)
-            var oldImage = picCanvas.Image;
-            picCanvas.Image = displayBitmap;
-            if (oldImage != null && oldImage != canvas) oldImage.Dispose();
+                // 폼의 기본 스크롤(위아래 이동) 동작 방지
+                if (e is HandledMouseEventArgs he) he.Handled = true;
+            }
         }
 
-        // --- 마우스 드로잉 (확대 상태 유지 보완) ---
+        // --- 마우스 이벤트 구현 (좌표 보정 필수) ---
 
         private void picCanvas_MouseDown(object sender, MouseEventArgs e)
         {
             isDrawing = true;
-            // 확대된 좌표를 실제 원본 비트맵의 좌표로 환산
+            // 확대된 화면의 좌표를 원본 캔버스 크기에 맞게 환산
             startPoint = new Point((int)(e.X / zoomScale), (int)(e.Y / zoomScale));
         }
 
@@ -108,7 +122,6 @@ namespace SimplePaint
         {
             if (!isDrawing) return;
 
-            // 임시 캔버스 생성 (잔상 효과)
             Bitmap tempCanvas = (Bitmap)canvas.Clone();
             using (Graphics g = Graphics.FromImage(tempCanvas))
             {
@@ -116,34 +129,20 @@ namespace SimplePaint
                 Point currentPoint = new Point((int)(e.X / zoomScale), (int)(e.Y / zoomScale));
                 DrawShape(g, myPen, startPoint, currentPoint);
             }
-
-            // [오류 수정] 임시 화면을 보여줄 때도 현재 배율(zoomScale)을 유지해야 함
-            Bitmap displayTemp = new Bitmap((int)(tempCanvas.Width * zoomScale), (int)(tempCanvas.Height * zoomScale));
-            using (Graphics g = Graphics.FromImage(displayTemp))
-            {
-                g.DrawImage(tempCanvas, 0, 0, displayTemp.Width, displayTemp.Height);
-            }
-            tempCanvas.Dispose();
-
-            var oldImage = picCanvas.Image;
-            picCanvas.Image = displayTemp;
-            if (oldImage != null && oldImage != canvas) oldImage.Dispose();
+            picCanvas.Image = tempCanvas;
         }
 
         private void picCanvas_MouseUp(object sender, MouseEventArgs e)
         {
             if (!isDrawing) return;
 
-            // 원본 캔버스에 최종 그림 기록
             using (Graphics g = Graphics.FromImage(canvas))
             {
                 Pen myPen = new Pen(currentColor, currentLineWidth);
                 Point endPoint = new Point((int)(e.X / zoomScale), (int)(e.Y / zoomScale));
                 DrawShape(g, myPen, startPoint, endPoint);
             }
-
-            // [오류 수정] 마우스를 뗐을 때 원본으로 돌아가지 않고 현재 배율 화면을 유지
-            UpdateCanvasDisplay();
+            picCanvas.Image = canvas;
             isDrawing = false;
         }
 
@@ -162,7 +161,7 @@ namespace SimplePaint
             }
         }
 
-        // --- 이미지 열기 (과제 4) ---
+        // --- 이미지 열기 기능  ---
         private void btnOpenFile_Click(object sender, EventArgs e)
         {
             using (OpenFileDialog ofd = new OpenFileDialog())
@@ -170,18 +169,40 @@ namespace SimplePaint
                 ofd.Filter = "이미지 파일(*.png;*.jpg;*.bmp)|*.png;*.jpg;*.bmp";
                 if (ofd.ShowDialog() == DialogResult.OK)
                 {
-                    Bitmap loadedImage = new Bitmap(ofd.FileName);
-                    if (canvas != null) canvas.Dispose();
-                    canvas = new Bitmap(loadedImage); // 원본 크기 저장
-                    loadedImage.Dispose();
+                    try
+                    {
+                        // 1. 기존 PictureBox가 쥐고 있던 이미지 연결을 먼저 끊어줌
+                        picCanvas.Image = null;
 
-                    zoomScale = 1.0f; // 초기 배율
-                    UpdateCanvasDisplay();
+                        // 2. 파일을 열어 원본 이미지를 잠시 변수에 담음
+                        // using을 사용하면 파일을 읽은 후 원본 파일의 '잠금' 상태를 즉시 해제
+                        using (Bitmap loadedImage = new Bitmap(ofd.FileName))
+                        {
+                            // 3. 기존 도화지가 있다면 메모리에서 안전하게 삭제
+                            if (canvas != null)
+                            {
+                                canvas.Dispose();
+                            }
+
+                            // 4. 불러온 이미지와 똑같은 크기와 내용을 가진 새로운 도화지를 생성
+                            canvas = new Bitmap(loadedImage);
+                        }
+
+                        // 5. 새롭게 만든 도화지를 다시 PictureBox에 연결
+                        picCanvas.Image = canvas;
+
+                        // 6. 불러올 때 배율 초기화 및 화면 적용
+                        ApplyZoom(1.0f);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("파일을 열 수 없습니다: " + ex.Message);
+                    }
                 }
             }
         }
 
-        // --- 이미지 저장 (과제 3) ---
+        // --- 기타 컨트롤 이벤트 ---
         private void btnSaveFile_Click(object sender, EventArgs e)
         {
             using (SaveFileDialog sfd = new SaveFileDialog())
@@ -191,12 +212,11 @@ namespace SimplePaint
                 {
                     string ext = System.IO.Path.GetExtension(sfd.FileName).ToLower();
                     ImageFormat format = (ext == ".jpg") ? ImageFormat.Jpeg : (ext == ".bmp" ? ImageFormat.Bmp : ImageFormat.Png);
-                    canvas.Save(sfd.FileName, format); // 원본 고화질 저장
+                    canvas.Save(sfd.FileName, format);
                 }
             }
         }
 
-        // 컨트롤 이벤트
         private void btnLine_Click(object sender, EventArgs e) => currentShape = "Line";
         private void btnRectangle_Click(object sender, EventArgs e) => currentShape = "Rectangle";
         private void btnCircle_Click(object sender, EventArgs e) => currentShape = "Circle";
